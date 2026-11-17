@@ -1,0 +1,46 @@
+@model Place
+@{
+    var returnUrl = Context.Request.Path.ToString() + Context.Request.QueryString.ToString();
+    var inPlan = PlanSession.Get(Context.Session).Contains(Model.Id);
+}
+
+<article class="place-card">
+    <a class="place-media" asp-controller="Places" asp-action="Details" asp-route-id="@Model.Id" tabindex="-1" aria-hidden="true">
+        <img src="@Model.ImagePath" alt="@Model.Name" loading="lazy" onerror="this.src='/images/nature.jpg';" />
+        <span class="pill pill-category">@Model.Category?.Icon @Model.Category?.Name</span>
+        @if (Model.IsFeatured)
+        {
+            <span class="pill pill-featured">Featured</span>
+        }
+    </a>
+
+    <div class="place-body">
+        <div class="place-meta">
+            <span class="rating" title="Visitor rating">★ @Model.Rating.ToString("0.0")</span>
+            <span>@Model.DistanceLabel</span>
+            <span>@Model.DurationLabel</span>
+        </div>
+
+        <h3><a asp-controller="Places" asp-action="Details" asp-route-id="@Model.Id">@Model.Name</a></h3>
+        <p>@Model.ShortDescription</p>
+
+        <div class="place-actions">
+            <a class="btn btn-ghost btn-sm" asp-controller="Places" asp-action="Details" asp-route-id="@Model.Id">
+                View details <span aria-hidden="true">→</span>
+            </a>
+
+            @if (inPlan)
+            {
+                <span class="in-plan">✓ In plan</span>
+            }
+            else
+            {
+                <form method="post" asp-controller="Planner" asp-action="Add">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button class="btn btn-soft btn-sm" type="submit">+ Add to plan</button>
+                </form>
+            }
+        </div>
+    </div>
+</article>

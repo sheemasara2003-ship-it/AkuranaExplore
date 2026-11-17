@@ -1,0 +1,22 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "Something went wrong";
+}
+
+<section class="section">
+    <div class="shell narrow">
+        <p class="eyebrow">Unexpected error</p>
+        <h1>Something went wrong</h1>
+        <p class="lead">The request could not be completed. Please try again, or head back to the places list.</p>
+
+        @if (Model.ShowRequestId)
+        {
+            <p class="muted"><strong>Request ID:</strong> <code>@Model.RequestId</code></p>
+        }
+
+        <div class="inline-actions">
+            <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Back to home</a>
+            <a class="btn btn-ghost" asp-controller="Places" asp-action="Index">Browse places</a>
+        </div>
+    </div>
+</section>

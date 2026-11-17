@@ -1,0 +1,122 @@
+@model PlacesIndexViewModel
+@{
+    ViewData["Title"] = "Explore places";
+    var hasFilters = !string.IsNullOrWhiteSpace(Model.Query) || !string.IsNullOrWhiteSpace(Model.CategorySlug);
+}
+
+<section class="page-head">
+    <div class="shell">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a asp-controller="Home" asp-action="Index">Home</a>
+            <span aria-hidden="true">/</span>
+            <span>Explore places</span>
+        </nav>
+
+        <div class="page-head-row">
+            <div>
+                <p class="eyebrow">The 25 km around Akurana</p>
+                <h1>Places worth your day</h1>
+                <p class="lead">Temples, tea country, gardens, a lake and somewhere good to eat — all within a short drive of town.</p>
+            </div>
+            <div class="page-head-stat">
+                <strong>@Model.TotalPlaces</strong>
+                <span>places in the guide</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-tight">
+    <div class="shell">
+        <form class="filter-bar" method="get" asp-controller="Places" asp-action="Index" role="search">
+            <div class="filter-search">
+                <span class="search-icon" aria-hidden="true">⌕</span>
+                <label class="sr-only" for="placeSearch">Search places</label>
+                <input id="placeSearch" name="q" type="search" value="@Model.Query" placeholder="Search by name, category or address" autocomplete="off" />
+            </div>
+
+            <label class="filter-select">
+                <span>Category</span>
+                <select name="category" data-auto-submit>
+                    <option value="">All categories</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.Slug" selected="@(Model.CategorySlug == category.Slug)">@category.Icon @category.Name</option>
+                    }
+                </select>
+            </label>
+
+            <label class="filter-select">
+                <span>Sort by</span>
+                <select name="sort" data-auto-submit>
+                    <option value="recommended" selected="@(Model.Sort == "recommended")">Recommended</option>
+                    <option value="name" selected="@(Model.Sort == "name")">Name A–Z</option>
+                    <option value="distance" selected="@(Model.Sort == "distance")">Closest first</option>
+                    <option value="duration" selected="@(Model.Sort == "duration")">Quickest visit</option>
+                </select>
+            </label>
+
+            <button class="btn btn-primary" type="submit">Apply</button>
+
+            @if (hasFilters)
+            {
+                <a class="filter-reset" asp-controller="Places" asp-action="Index">Clear</a>
+            }
+        </form>
+
+        <div class="chip-row" aria-label="Filter by category">
+            <a class="chip @(string.IsNullOrEmpty(Model.CategorySlug) ? "is-active" : "")"
+               asp-controller="Places" asp-action="Index" asp-route-q="@Model.Query" asp-route-sort="@Model.Sort">
+                All <span>@Model.TotalPlaces</span>
+            </a>
+            @foreach (var category in Model.Categories)
+            {
+                var count = Model.CategoryCounts.TryGetValue(category.Id, out var value) ? value : 0;
+                <a class="chip @(Model.CategorySlug == category.Slug ? "is-active" : "")"
+                   asp-controller="Places" asp-action="Index" asp-route-q="@Model.Query" asp-route-category="@category.Slug" asp-route-sort="@Model.Sort">
+                    <span aria-hidden="true">@category.Icon</span> @category.Name <span>@count</span>
+                </a>
+            }
+        </div>
+
+        <div class="results-head">
+            <p>
+                Showing <strong>@Model.Places.Count</strong> of @Model.TotalPlaces place@(Model.TotalPlaces == 1 ? "" : "s")
+                @if (!string.IsNullOrWhiteSpace(Model.Query))
+                {
+                    <span class="active-filter">for “@Model.Query”</span>
+                }
+            </p>
+            @if (!string.IsNullOrWhiteSpace(Model.CategorySlug))
+            {
+                var active = Model.Categories.FirstOrDefault(c => c.Slug == Model.CategorySlug);
+                if (active is not null)
+                {
+                    <span class="active-filter">@active.Icon @active.Name</span>
+                }
+            }
+        </div>
+
+        @if (Model.Places.Count == 0)
+        {
+            <div class="empty-state">
+                <span class="empty-icon" aria-hidden="true">⌕</span>
+                <h2>No places match that search</h2>
+                <p>Try a broader keyword, choose a different category, or reset the filters to see all @Model.TotalPlaces places.</p>
+                <div class="inline-actions">
+                    <a class="btn btn-primary" asp-controller="Places" asp-action="Index">Show all places</a>
+                    <a class="btn btn-ghost" asp-controller="Planner" asp-action="Index">Open my day plan</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card-grid">
+                @foreach (var place in Model.Places)
+                {
+                    <partial name="_PlaceCard" model="place" />
+                }
+            </div>
+        }
+    </div>
+</section>

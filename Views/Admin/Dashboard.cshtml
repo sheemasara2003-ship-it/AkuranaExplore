@@ -1,0 +1,258 @@
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin dashboard";
+    ViewData["Categories"] = Model.Categories;
+    var lastLogin = Model.AdminLastLogin.HasValue
+        ? Model.AdminLastLogin.Value.ToLocalTime().ToString("dd MMM yyyy, h:mm tt")
+        : "First sign-in";
+    var initial = string.IsNullOrWhiteSpace(Model.AdminName) ? "A" : Model.AdminName[..1].ToUpperInvariant();
+}
+
+<section class="page-head admin-head">
+    <div class="shell">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a asp-controller="Home" asp-action="Index">Home</a>
+            <span aria-hidden="true">/</span>
+            <span>Admin dashboard</span>
+        </nav>
+
+        <div class="page-head-row">
+            <div>
+                <p class="eyebrow">Administrator dashboard</p>
+                <h1>Tourism records</h1>
+                <p class="lead">Maintain the places, categories and details that visitors rely on.</p>
+            </div>
+
+            <div class="admin-identity">
+                <span class="admin-avatar" aria-hidden="true">@initial</span>
+                <div>
+                    <strong>@Model.AdminName</strong>
+                    <span>Last sign-in: @lastLogin</span>
+                </div>
+                <a class="btn btn-ghost btn-sm" asp-controller="Home" asp-action="Index">View site</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-tight">
+    <div class="shell">
+        <div class="stat-grid">
+            <div class="stat-card">
+                <span class="stat-label">Places</span>
+                <strong>@Model.Stats.PlaceCount</strong>
+                <span class="stat-foot">in the public guide</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Categories</span>
+                <strong>@Model.Stats.CategoryCount</strong>
+                <span class="stat-foot">used to organise places</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Featured</span>
+                <strong>@Model.Stats.FeaturedCount</strong>
+                <span class="stat-foot">shown on the home page</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Average rating</span>
+                <strong>@Model.Stats.AverageRating.ToString("0.0")</strong>
+                <span class="stat-foot">across all places</span>
+            </div>
+        </div>
+
+        <div class="admin-layout">
+            <div class="admin-main">
+                <section class="panel" id="place-editor">
+                    <div class="panel-head">
+                        <div>
+                            <p class="eyebrow">@(Model.IsEditing ? "Editing an existing record" : "New record")</p>
+                            <h2>@(Model.IsEditing ? Model.EditPlace.Name : "Add a place")</h2>
+                        </div>
+                        @if (Model.IsEditing)
+                        {
+                            <a class="btn btn-ghost btn-sm" asp-controller="Admin" asp-action="Dashboard">Cancel edit</a>
+                        }
+                    </div>
+
+                    <partial name="_PlaceForm" model="Model.EditPlace" />
+                </section>
+
+                <section class="panel">
+                    <div class="panel-head">
+                        <div>
+                            <p class="eyebrow">The database</p>
+                            <h2>All places <span class="count-badge">@Model.Places.Count</span></h2>
+                        </div>
+                        <span class="panel-note">Deleting a place removes it from the public guide immediately.</span>
+                    </div>
+
+                    @if (Model.Places.Count == 0)
+                    {
+                        <p class="muted">No places have been added yet. Use the form above to create the first record.</p>
+                    }
+                    else
+                    {
+                        <div class="table-wrap">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Place</th>
+                                        <th scope="col">Category</th>
+                                        <th scope="col">Distance</th>
+                                        <th scope="col">Opening hours</th>
+                                        <th scope="col">Featured</th>
+                                        <th scope="col" class="table-actions-col">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var place in Model.Places)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="table-place">
+                                                    <a asp-controller="Places" asp-action="Details" asp-route-id="@place.Id" target="_blank" rel="noopener">@place.Name</a>
+                                                    <span>@place.Address</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="pill pill-category pill-sm">@place.Category?.Icon @place.Category?.Name</span>
+                                            </td>
+                                            <td class="nowrap">@place.DistanceFromAkuranaKm.ToString("0.#") km</td>
+                                            <td class="table-hours">@place.OpeningHours</td>
+                                            <td>
+                                                @if (place.IsFeatured)
+                                                {
+                                                    <span class="badge badge-yes">Yes</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge badge-no">No</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="table-actions">
+                                                    <a class="btn btn-ghost btn-sm" asp-controller="Admin" asp-action="Dashboard" asp-route-editId="@place.Id" asp-fragment="place-editor">Edit</a>
+                                                    <form method="post" asp-controller="Admin" asp-action="DeletePlace" data-confirm="Delete “@place.Name” permanently? This cannot be undone.">
+                                                        <input type="hidden" name="id" value="@place.Id" />
+                                                        <button class="btn btn-ghost btn-sm text-danger" type="submit">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </section>
+            </div>
+
+            <aside class="admin-side">
+                <section class="panel">
+                    <div class="panel-head panel-head-sm">
+                        <div>
+                            <p class="eyebrow">Organisation</p>
+                            <h2>Categories <span class="count-badge">@Model.Categories.Count</span></h2>
+                        </div>
+                    </div>
+
+                    <details class="category-add">
+                        <summary class="btn btn-soft btn-sm">+ Add category</summary>
+                        <form class="mini-form" method="post" asp-controller="Admin" asp-action="SaveCategory">
+                            <input type="hidden" name="Id" value="0" />
+                            <label>Name
+                                <input name="Name" maxlength="60" required placeholder="e.g. Wildlife" />
+                            </label>
+                            <label>URL slug
+                                <input name="Slug" maxlength="60" placeholder="auto from name" />
+                            </label>
+                            <div class="mini-row">
+                                <label>Icon
+                                    <input name="Icon" maxlength="12" value="📍" />
+                                </label>
+                                <label>Sort order
+                                    <input name="SortOrder" type="number" min="0" value="99" />
+                                </label>
+                            </div>
+                            <label>Short blurb
+                                <input name="Blurb" maxlength="200" placeholder="What belongs in this category?" />
+                            </label>
+                            <label>Image path
+                                <input name="ImageUrl" maxlength="200" value="/images/nature.jpg" />
+                            </label>
+                            <button class="btn btn-primary btn-sm" type="submit">Save category</button>
+                        </form>
+                    </details>
+
+                    <ul class="category-list">
+                        @foreach (var category in Model.Categories)
+                        {
+                            <li class="category-row">
+                                <span class="category-row-icon" aria-hidden="true">@category.Icon</span>
+                                <div class="category-row-info">
+                                    <strong>@category.Name</strong>
+                                    <span>@category.Places.Count place@(category.Places.Count == 1 ? "" : "s") · /@category.Slug</span>
+                                </div>
+                                <div class="category-row-actions">
+                                    <details class="row-edit">
+                                        <summary class="icon-btn" title="Edit @category.Name" aria-label="Edit @category.Name">✎</summary>
+                                        <form class="mini-form mini-form-pop" method="post" asp-controller="Admin" asp-action="SaveCategory">
+                                            <input type="hidden" name="Id" value="@category.Id" />
+                                            <input type="hidden" name="Blurb" value="@category.Blurb" />
+                                            
+                <label>Name
+    <input name="Name" maxlength="60" value="@category.Name" required />
+</label>
+
+<label>Image path
+    <input name="ImageUrl" maxlength="200" value="@category.ImageUrl" required />
+</label>
+
+<label>URL slug
+    <input name="Slug" maxlength="60" value="@category.Slug" />
+</label>
+                                            <div class="mini-row">
+                                                <label>Icon
+                                                    <input name="Icon" maxlength="12" value="@category.Icon" />
+                                                </label>
+                                                <label>Sort
+                                                    <input name="SortOrder" type="number" min="0" value="@category.SortOrder" />
+                                                </label>
+                                            </div>
+                                            <button class="btn btn-primary btn-sm" type="submit">Update</button>
+                                        </form>
+                                    </details>
+
+                                    @if (category.Places.Count == 0)
+                                    {
+                                        <form method="post" asp-controller="Admin" asp-action="DeleteCategory" data-confirm="Delete the “@category.Name” category?">
+                                            <input type="hidden" name="id" value="@category.Id" />
+                                            <button class="icon-btn icon-btn-danger" type="submit" title="Delete @category.Name" aria-label="Delete @category.Name">×</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <button class="icon-btn" type="button" disabled title="Move its places before deleting this category" aria-label="Cannot delete @category.Name yet">×</button>
+                                    }
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </section>
+
+                <section class="panel panel-note">
+                    <p class="eyebrow">Quality check</p>
+                    <h2>Before publishing</h2>
+                    <ul class="tick-list">
+                        <li>Description and short description are both filled in.</li>
+                        <li>Travel tips give visitors something practical.</li>
+                        <li>Opening hours and entry fee are current.</li>
+                        <li>Distance stays inside the 25 km study area.</li>
+                        <li>Coordinate pair points to the correct location.</li>
+                    </ul>
+                    <p class="panel-footnote">All changes are validated and saved through the backend. The public site updates immediately.</p>
+                </section>
+            </aside>
+        </div>
+    </div>
+</section>

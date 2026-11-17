@@ -1,0 +1,21 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build files
+bin/
+obj/
+
+# Development settings
+appsettings.Development.json
+
+# Database files
+*.mdf
+*.ldf
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp

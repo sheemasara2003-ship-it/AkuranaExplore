@@ -1,0 +1,119 @@
+@model PlaceForm
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    var categories = ViewData["Categories"] as IEnumerable<Category> ?? Enumerable.Empty<Category>();
+    var isEditing = Model.Id > 0;
+}
+
+<form class="admin-form" method="post" asp-controller="Admin" asp-action="SavePlace">
+    <input asp-for="Id" type="hidden" />
+
+    <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
+
+    <div class="form-grid">
+        <div class="field span-8">
+            <label asp-for="Name"></label>
+            <input asp-for="Name" placeholder="e.g. Kandy Lake" />
+            <span asp-validation-for="Name" class="field-error"></span>
+        </div>
+
+        <div class="field span-4">
+            <label asp-for="CategoryId">Category</label>
+            <select asp-for="CategoryId" asp-items="@(new SelectList(categories, "Id", "Name", Model.CategoryId))">
+                <option value="0">Choose a category</option>
+            </select>
+            <span asp-validation-for="CategoryId" class="field-error"></span>
+        </div>
+
+        <div class="field span-12">
+            <label asp-for="ShortDescription"></label>
+            <input asp-for="ShortDescription" maxlength="240" placeholder="One clear sentence for the place cards" />
+            <span class="field-hint">Shown on the place cards and search results. Up to 240 characters.</span>
+            <span asp-validation-for="ShortDescription" class="field-error"></span>
+        </div>
+
+        <div class="field span-12">
+            <label asp-for="Description"></label>
+            <textarea asp-for="Description" rows="5" placeholder="What makes this place worth visiting?"></textarea>
+            <span asp-validation-for="Description" class="field-error"></span>
+        </div>
+
+        <div class="field span-12">
+            <label asp-for="TravelTips"></label>
+            <textarea asp-for="TravelTips" rows="3" placeholder="Practical advice: dress code, best time, what to bring, what to avoid."></textarea>
+            <span asp-validation-for="TravelTips" class="field-error"></span>
+        </div>
+
+        <div class="field span-8">
+            <label asp-for="Address"></label>
+            <input asp-for="Address" placeholder="Street / village, town, Sri Lanka" />
+            <span asp-validation-for="Address" class="field-error"></span>
+        </div>
+
+        <div class="field span-4">
+            <label asp-for="OpeningHours"></label>
+            <input asp-for="OpeningHours" placeholder="e.g. 8:30 AM – 4:30 PM (Tue–Sun)" />
+            <span asp-validation-for="OpeningHours" class="field-error"></span>
+        </div>
+
+        <div class="field span-3">
+            <label asp-for="Latitude"></label>
+            <input asp-for="Latitude" type="number" step="any" placeholder="7.2906" />
+            <span asp-validation-for="Latitude" class="field-error"></span>
+        </div>
+
+        <div class="field span-3">
+            <label asp-for="Longitude"></label>
+            <input asp-for="Longitude" type="number" step="any" placeholder="80.6410" />
+            <span asp-validation-for="Longitude" class="field-error"></span>
+        </div>
+
+        <div class="field span-3">
+            <label asp-for="DistanceFromAkuranaKm"></label>
+            <input asp-for="DistanceFromAkuranaKm" type="number" step="0.1" min="0" max="25" />
+            <span asp-validation-for="DistanceFromAkuranaKm" class="field-error"></span>
+        </div>
+
+        <div class="field span-3">
+            <label asp-for="Rating"></label>
+            <input asp-for="Rating" type="number" step="0.1" min="0" max="5" />
+            <span asp-validation-for="Rating" class="field-error"></span>
+        </div>
+
+        <div class="field span-4">
+            <label asp-for="EntryFeeLkr"></label>
+            <input asp-for="EntryFeeLkr" type="number" step="0.01" min="0" />
+            <span class="field-hint">Use 0 for free entry.</span>
+            <span asp-validation-for="EntryFeeLkr" class="field-error"></span>
+        </div>
+
+        <div class="field span-4">
+            <label asp-for="SuggestedDurationMinutes"></label>
+            <input asp-for="SuggestedDurationMinutes" type="number" min="15" max="1440" step="15" />
+            <span asp-validation-for="SuggestedDurationMinutes" class="field-error"></span>
+        </div>
+
+        <div class="field span-4">
+            <label asp-for="ImageUrl"></label>
+            <input asp-for="ImageUrl" placeholder="/images/nature.jpg" />
+            <span class="field-hint">Optional. Leave blank to use the category image.</span>
+            <span asp-validation-for="ImageUrl" class="field-error"></span>
+        </div>
+
+        <div class="span-12">
+            <label class="checkbox">
+                <input asp-for="IsFeatured" />
+                <span>Feature this place on the home page</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button class="btn btn-primary" type="submit">@(isEditing ? "Update place" : "Save place")</button>
+        @if (isEditing)
+        {
+            <a class="btn btn-ghost" asp-controller="Admin" asp-action="Dashboard">Cancel edit</a>
+        }
+        <span class="form-actions-note">All fields marked required must be completed before saving.</span>
+    </div>
+</form>

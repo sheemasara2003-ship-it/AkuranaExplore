@@ -1,0 +1,181 @@
+@model PlaceDetailsViewModel
+@{
+    ViewData["Title"] = Model.Place.Name;
+    var place = Model.Place;
+    var returnUrl = Context.Request.Path.ToString() + Context.Request.QueryString.ToString();
+}
+
+<section class="detail-hero">
+    <div class="shell">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a asp-controller="Home" asp-action="Index">Home</a>
+            <span aria-hidden="true">/</span>
+            <a asp-controller="Places" asp-action="Index">Explore places</a>
+            <span aria-hidden="true">/</span>
+            <span>@place.Name</span>
+        </nav>
+
+        <div class="detail-hero-grid">
+            <div class="detail-media">
+                <img src="@place.ImagePath" alt="@place.Name" onerror="this.src='/images/nature.jpg';" />
+                <span class="pill pill-category">@place.Category?.Icon @place.Category?.Name</span>
+                @if (place.IsFeatured)
+                {
+                    <span class="pill pill-featured">Featured</span>
+                }
+            </div>
+
+            <div class="detail-intro">
+                <div class="detail-rating">
+                    <span class="rating rating-lg">★ @place.Rating.ToString("0.0")</span>
+                    <span class="muted">Visitor rating</span>
+                </div>
+
+                <h1>@place.Name</h1>
+                <p class="lead">@place.ShortDescription</p>
+
+                <p class="detail-address">
+                    <span aria-hidden="true">📍</span>
+                    @place.Address
+                </p>
+
+                <div class="detail-cta">
+                    @if (Model.IsInPlan)
+                    {
+                        <a class="btn btn-primary" asp-controller="Planner" asp-action="Index">✓ In your plan — view it</a>
+                        <form method="post" asp-controller="Planner" asp-action="Remove">
+                            <input type="hidden" name="id" value="@place.Id" />
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                            <button class="btn btn-ghost" type="submit">Remove from plan</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form method="post" asp-controller="Planner" asp-action="Add">
+                            <input type="hidden" name="id" value="@place.Id" />
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                            <button class="btn btn-primary" type="submit">+ Add to day plan</button>
+                        </form>
+                    }
+
+                    <a class="btn btn-ghost" href="@place.MapUrl" target="_blank" rel="noopener">Open map <span aria-hidden="true">↗</span></a>
+                </div>
+
+                @if (Model.PlanCount > 0)
+                {
+                    <p class="plan-hint">@Model.PlanCount stop@(Model.PlanCount == 1 ? "" : "s") already in your plan.</p>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="shell detail-layout">
+        <div class="detail-main">
+            <section class="prose-block">
+                <p class="eyebrow">About this place</p>
+                <h2>Why it is worth the stop</h2>
+                <p>@place.Description</p>
+            </section>
+
+            <section class="tip-box">
+                <div class="tip-icon" aria-hidden="true">✦</div>
+                <div>
+                    <p class="eyebrow">Travel tips</p>
+                    <h2>Before you go</h2>
+                    <p>@place.TravelTips</p>
+                </div>
+            </section>
+
+            @if (Model.Nearby.Count > 0)
+            {
+                <section class="nearby-block">
+                    <div class="section-head section-head-sm">
+                        <div>
+                            <p class="eyebrow">Keep going</p>
+                            <h2>Nearby places</h2>
+                        </div>
+                        <a class="text-link" asp-controller="Places" asp-action="Index" asp-route-category="@place.Category?.Slug">More @place.Category?.Name.ToLowerInvariant() <span aria-hidden="true">→</span></a>
+                    </div>
+
+                    <div class="nearby-list">
+                        @foreach (var nearby in Model.Nearby)
+                        {
+                            <a class="nearby-item" asp-controller="Places" asp-action="Details" asp-route-id="@nearby.Place.Id">
+                                <img src="@nearby.Place.ImagePath" alt="@nearby.Place.Name" loading="lazy" onerror="this.src='/images/nature.jpg';" />
+                                <div>
+                                    <h3>@nearby.Place.Name</h3>
+                                    <p>@nearby.Place.ShortDescription</p>
+                                    <span>@nearby.DistanceLabel · @nearby.Place.DurationLabel</span>
+                                </div>
+                                <span class="nearby-arrow" aria-hidden="true">→</span>
+                            </a>
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+
+        <aside class="detail-side">
+            <section class="info-card">
+                <p class="eyebrow">Plan your visit</p>
+                <h2>The essentials</h2>
+
+                <dl class="fact-list">
+                    <div>
+                        <dt>Category</dt>
+                        <dd><a asp-controller="Places" asp-action="Index" asp-route-category="@place.Category?.Slug">@place.Category?.Icon @place.Category?.Name</a></dd>
+                    </div>
+                    <div>
+                        <dt>Distance</dt>
+                        <dd>@place.DistanceLabel</dd>
+                    </div>
+                    <div>
+                        <dt>Opening hours</dt>
+                        <dd>@place.OpeningHours</dd>
+                    </div>
+                    <div>
+                        <dt>Entry fee</dt>
+                        <dd>@place.EntryFeeLabel</dd>
+                    </div>
+                    <div>
+                        <dt>Allow</dt>
+                        <dd>@place.DurationLabel</dd>
+                    </div>
+                    <div>
+                        <dt>Location</dt>
+                        <dd>@place.Address</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="map-card">
+                <div class="map-visual" aria-hidden="true">
+                    <span class="map-road map-road-a"></span>
+                    <span class="map-road map-road-b"></span>
+                    <span class="map-road map-road-c"></span>
+                    <span class="map-water"></span>
+                    <span class="map-pin"><span></span></span>
+                    <span class="map-label">@place.Name</span>
+                </div>
+                <div class="map-body">
+                    <div>
+                        <strong>Approximate location</strong>
+                        <span>@place.Latitude.ToString("0.0000"), @place.Longitude.ToString("0.0000")</span>
+                    </div>
+                    <div class="map-actions">
+                        <a class="btn btn-sm btn-primary" href="@place.MapUrl" target="_blank" rel="noopener">Open map ↗</a>
+                        <a class="btn btn-sm btn-ghost" href="@place.DirectionsUrl" target="_blank" rel="noopener">Directions ↗</a>
+                    </div>
+                </div>
+            </section>
+
+            <section class="side-note">
+                <p><strong>Estimates only.</strong> Travel times use an average of 25 km/h on local roads. Check opening hours and fees directly with the site before you travel.</p>
+            </section>
+
+            <a class="back-link" asp-controller="Places" asp-action="Index"><span aria-hidden="true">←</span> Back to all places</a>
+        </aside>
+    </div>
+</section>

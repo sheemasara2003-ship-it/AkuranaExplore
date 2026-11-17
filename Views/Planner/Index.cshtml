@@ -1,0 +1,208 @@
+@model PlannerViewModel
+@{
+    ViewData["Title"] = "Day planner";
+    var start = Model.Stops.FirstOrDefault();
+    var end = Model.Stops.LastOrDefault();
+}
+
+<section class="page-head">
+    <div class="shell">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a asp-controller="Home" asp-action="Index">Home</a>
+            <span aria-hidden="true">/</span>
+            <span>Day planner</span>
+        </nav>
+
+        <div class="page-head-row">
+            <div>
+                <p class="eyebrow">Your one-day route</p>
+                <h1>Build the day, stop by stop</h1>
+                <p class="lead">Pick the places you care about, put them in a sensible order, and let the planner handle the clock.</p>
+            </div>
+            <div class="page-head-stat">
+                <strong>@Model.Stops.Count</strong>
+                <span>stop@(Model.Stops.Count == 1 ? "" : "s") in your plan</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-tight planner-section">
+    <div class="shell planner-layout">
+        <div class="planner-main">
+            @if (Model.Stops.Count == 0)
+            {
+                <div class="empty-state empty-plan">
+                    <span class="empty-icon" aria-hidden="true">🗺️</span>
+                    <h2>Your day is still wide open</h2>
+                    <p>You have not selected any places yet. Browse the guide and use “Add to plan” on anything that looks good — even two or three stops make a solid day.</p>
+                    <div class="inline-actions">
+                        <a class="btn btn-primary" asp-controller="Places" asp-action="Index">Browse places</a>
+                        <a class="btn btn-ghost" asp-controller="Places" asp-action="Index" asp-route-sort="distance">See what is closest</a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="plan-summary" data-plan>
+                    <div class="plan-summary-stat">
+                        <span>Stops</span>
+                        <strong>@Model.Stops.Count</strong>
+                    </div>
+                    <div class="plan-summary-stat">
+                        <span>Distance</span>
+                        <strong>@Model.TotalDistanceLabel</strong>
+                    </div>
+                    <div class="plan-summary-stat">
+                        <span>Visit + travel</span>
+                        <strong>@Model.TotalTimeLabel</strong>
+                    </div>
+                    <div class="plan-summary-stat">
+                        <span>Finish</span>
+                        <strong>@Model.FinishLabel</strong>
+                    </div>
+                </div>
+
+                @if (Model.IsLongDay)
+                {
+                    <div class="inline-alert">
+                        <span aria-hidden="true">⏳</span>
+                        <p><strong>That is a long day.</strong> The plan runs past 7:00 PM. Consider removing a stop or choosing a shorter visit.</p>
+                    </div>
+                }
+
+                <ol class="stop-list">
+                    @for (var i = 0; i < Model.Stops.Count; i++)
+                    {
+                        var stop = Model.Stops[i];
+                        var isFirst = i == 0;
+                        var isLast = i == Model.Stops.Count - 1;
+
+                        <li class="stop-card" data-plan-stop
+                            data-plan-name="@stop.Place.Name"
+                            data-plan-time="@stop.ArrivalLabel – @stop.DepartureLabel"
+                            data-plan-meta="@stop.Place.DistanceLabel · @stop.Place.DurationLabel">
+                            <div class="stop-rail">
+                                <span class="stop-number">@stop.Order</span>
+                                @if (!isLast)
+                                {
+                                    <span class="stop-line"></span>
+                                }
+                            </div>
+
+                            <div class="stop-content">
+                                <div class="stop-top">
+                                    <div>
+                                        <span class="stop-time">@stop.ArrivalLabel – @stop.DepartureLabel</span>
+                                        <h2><a asp-controller="Places" asp-action="Details" asp-route-id="@stop.Place.Id">@stop.Place.Name</a></h2>
+                                    </div>
+                                    <span class="pill pill-category">@stop.Place.Category?.Icon @stop.Place.Category?.Name</span>
+                                </div>
+
+                                <p>@stop.Place.ShortDescription</p>
+
+                                <div class="stop-facts">
+                                    <span><span aria-hidden="true">🚗</span> @(isFirst ? "From Akurana" : "From previous stop") · @stop.DistanceFromPreviousKm.ToString("0.#") km · ~@stop.TravelMinutesFromPrevious min</span>
+                                    <span><span aria-hidden="true">🕒</span> @stop.Place.OpeningHours</span>
+                                    <span><span aria-hidden="true">🎟</span> @stop.Place.EntryFeeLabel</span>
+                                </div>
+
+                                <div class="stop-actions">
+                                    <a class="btn btn-ghost btn-sm" asp-controller="Places" asp-action="Details" asp-route-id="@stop.Place.Id">Details</a>
+
+                                    <form method="post" asp-controller="Planner" asp-action="Move">
+                                        <input type="hidden" name="id" value="@stop.Place.Id" />
+                                        <input type="hidden" name="direction" value="-1" />
+                                        <button class="icon-btn" type="submit" disabled="@isFirst" title="Move earlier" aria-label="Move @stop.Place.Name earlier">↑</button>
+                                    </form>
+
+                                    <form method="post" asp-controller="Planner" asp-action="Move">
+                                        <input type="hidden" name="id" value="@stop.Place.Id" />
+                                        <input type="hidden" name="direction" value="1" />
+                                        <button class="icon-btn" type="submit" disabled="@isLast" title="Move later" aria-label="Move @stop.Place.Name later">↓</button>
+                                    </form>
+
+                                    <form method="post" asp-controller="Planner" asp-action="Remove">
+                                        <input type="hidden" name="id" value="@stop.Place.Id" />
+                                        <button class="btn btn-ghost btn-sm text-danger" type="submit">Remove</button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <img class="stop-thumb" src="@stop.Place.ImagePath" alt="" loading="lazy" />
+                        </li>
+                    }
+                </ol>
+
+                <div class="planner-tools">
+                    <form method="post" asp-controller="Planner" asp-action="Optimize">
+                        <button class="btn btn-soft" type="submit"><span aria-hidden="true">⇅</span> Shorten the route</button>
+                    </form>
+                    <button class="btn btn-ghost" type="button" data-copy-plan><span aria-hidden="true">⧉</span> Copy plan</button>
+                    <button class="btn btn-ghost" type="button" data-print-plan><span aria-hidden="true">⎙</span> Print</button>
+                    <form method="post" asp-controller="Planner" asp-action="Clear" data-confirm="Clear every stop from your day plan?">
+                        <button class="btn btn-danger-soft" type="submit">Clear plan</button>
+                    </form>
+                </div>
+
+                <p class="plan-finish-note">
+                    Based on an 8:30 AM start from Akurana. The plan finishes around
+                    <strong>@Model.FinishLabel</strong> — distances and travel times are estimates.
+                </p>
+                <p class="print-only print-header">AkuranaExplore · one-day visit plan</p>
+            }
+        </div>
+
+        <aside class="planner-side">
+            <section class="panel add-panel">
+                <div class="panel-head panel-head-sm">
+                    <div>
+                        <p class="eyebrow">Add stops</p>
+                        <h2>More for your day</h2>
+                    </div>
+                    @if (start is not null)
+                    {
+                        <span class="plan-window">@(Model.Stops.Count == 1 ? start.Place.Name : $"{start.Place.Name} → {end!.Place.Name}")</span>
+                    }
+                </div>
+
+                @if (Model.Suggestions.Count == 0)
+                {
+                    <p class="muted">Every place in the guide is already in your plan. That is a very full day.</p>
+                }
+                else
+                {
+                    <ul class="add-list">
+                        @foreach (var place in Model.Suggestions)
+                        {
+                            <li>
+                                <img src="@place.ImagePath" alt="" loading="lazy" />
+                                <div class="add-info">
+                                    <a asp-controller="Places" asp-action="Details" asp-route-id="@place.Id">@place.Name</a>
+                                    <span>@place.DistanceLabel · @place.DurationLabel</span>
+                                </div>
+                                <form method="post" asp-controller="Planner" asp-action="Add">
+                                    <input type="hidden" name="id" value="@place.Id" />
+                                    <button class="icon-btn add-btn" type="submit" aria-label="Add @place.Name to your plan" title="Add to plan">+</button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                    <a class="text-link" asp-controller="Places" asp-action="Index">Browse all places <span aria-hidden="true">→</span></a>
+                }
+            </section>
+
+            <section class="tip-box tip-box-sm">
+                <div class="tip-icon" aria-hidden="true">✦</div>
+                <div>
+                    <h3>A better day, practically</h3>
+                    <ul class="tick-list">
+                        <li>Start with the stop furthest from Akurana, then work back towards town.</li>
+                        <li>Group places on the same side of Kandy to avoid crossing the city twice.</li>
+                        <li>Check opening hours before relying on a late-afternoon stop.</li>
+                    </ul>
+                </div>
+            </section>
+        </aside>
+    </div>
+</section>

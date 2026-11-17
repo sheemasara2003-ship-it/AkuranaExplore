@@ -1,0 +1,137 @@
+@{
+    var planCount = PlanSession.Get(Context.Session).Count;
+}
+
+@functions {
+    private string NavClass(string controller)
+    {
+        var current = ViewContext.RouteData.Values["controller"]?.ToString();
+        return string.Equals(current, controller, StringComparison.OrdinalIgnoreCase)
+            ? "nav-link is-active"
+            : "nav-link";
+    }
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · AkuranaExplore</title>
+    <meta name="description" content="Discover places around Akurana, Sri Lanka and build a simple one-day visit plan." />
+    <meta name="theme-color" content="#123f2e" />
+    <link rel="icon" type="image/jpeg" href="~/images/logo.jpg" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+        <div class="shell header-inner">
+            <a class="brand" asp-controller="Home" asp-action="Index" aria-label="AkuranaExplore home">
+                <img src="~/images/logo.jpg" alt="" width="42" height="42" />
+                <span class="brand-text"><strong>Akurana</strong><em>Explore</em></span>
+            </a>
+
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primaryNav" data-nav-toggle>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span class="sr-only">Toggle navigation</span>
+            </button>
+
+            <nav class="primary-nav" id="primaryNav" data-nav>
+                <a class="@NavClass("Home")" asp-controller="Home" asp-action="Index">Home</a>
+                <a class="@NavClass("Places")" asp-controller="Places" asp-action="Index">Explore places</a>
+                <a class="@NavClass("Planner")" asp-controller="Planner" asp-action="Index">
+                    Day planner
+                    <span class="nav-count @(planCount == 0 ? "is-empty" : "")" data-nav-count>@planCount</span>
+                </a>
+
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a class="@NavClass("Admin")" asp-controller="Admin" asp-action="Dashboard">Dashboard</a>
+                    <form class="nav-form" method="post" asp-controller="Admin" asp-action="Logout">
+                        <button class="btn btn-ghost btn-sm" type="submit">Sign out</button>
+                    </form>
+                }
+                else
+                {
+                    <a class="@NavClass("Admin")" asp-controller="Admin" asp-action="Login">Admin</a>
+                }
+            </nav>
+        </div>
+    </header>
+
+    <div class="flash-stack" aria-live="polite" aria-atomic="true">
+        @if (TempData["Success"] is string success)
+        {
+            <div class="flash flash-success" data-flash>
+                <span class="flash-icon" aria-hidden="true">✓</span>
+                <span>@success</span>
+                <button type="button" data-dismiss aria-label="Dismiss message">×</button>
+            </div>
+        }
+        @if (TempData["Info"] is string info)
+        {
+            <div class="flash flash-info" data-flash>
+                <span class="flash-icon" aria-hidden="true">i</span>
+                <span>@info</span>
+                <button type="button" data-dismiss aria-label="Dismiss message">×</button>
+            </div>
+        }
+        @if (TempData["Error"] is string error)
+        {
+            <div class="flash flash-error" data-flash>
+                <span class="flash-icon" aria-hidden="true">!</span>
+                <span>@error</span>
+                <button type="button" data-dismiss aria-label="Dismiss message">×</button>
+            </div>
+        }
+    </div>
+
+    <main id="main">
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <div class="shell footer-grid">
+            <div class="footer-brand">
+                <a class="brand brand-light" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/logo.jpg" alt="" width="38" height="38" />
+                    <span class="brand-text"><strong>Akurana</strong><em>Explore</em></span>
+                </a>
+                <p>A smart local day-visit planner for Akurana and the hills around Kandy. Built for visitors who would rather explore than search.</p>
+            </div>
+
+            <div class="footer-col">
+                <h3>Explore</h3>
+                <a asp-controller="Places" asp-action="Index">All places</a>
+                <a asp-controller="Places" asp-action="Index" asp-route-category="religious">Religious sites</a>
+                <a asp-controller="Places" asp-action="Index" asp-route-category="nature">Nature &amp; gardens</a>
+                <a asp-controller="Places" asp-action="Index" asp-route-category="restaurants">Where to eat</a>
+            </div>
+
+            <div class="footer-col">
+                <h3>Plan</h3>
+                <a asp-controller="Planner" asp-action="Index">Your day plan</a>
+                <a asp-controller="Places" asp-action="Index" asp-route-sort="distance">Closest to Akurana</a>
+                <a asp-controller="Places" asp-action="Index" asp-route-sort="duration">Quick visits</a>
+                <a asp-controller="Admin" asp-action="Login">Administrator</a>
+            </div>
+
+            <div class="footer-col footer-note">
+                <h3>Before you go</h3>
+                <p>Distances and travel times are estimates for planning only. Opening hours and fees can change — confirm with the site before travelling, and never rely on this app for emergency information.</p>
+            </div>
+        </div>
+        <div class="shell footer-bottom">
+            <span>© @DateTime.Now.Year AkuranaExplore · ITE2953 student project</span>
+            <span>Made for the 25 km around Akurana, Sri Lanka</span>
+        </div>
+    </footer>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

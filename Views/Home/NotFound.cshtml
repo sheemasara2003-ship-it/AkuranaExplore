@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = "Page not found";
+}
+
+<section class="section">
+    <div class="shell narrow">
+        <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true">🧭</span>
+            <p class="eyebrow">404 · Off the map</p>
+            <h2>That page is not here</h2>
+            <p>The link may be old, or the place may have moved. Head back to the guide and pick a route that does exist.</p>
+            <div class="inline-actions">
+                <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Back to home</a>
+                <a class="btn btn-ghost" asp-controller="Places" asp-action="Index">Browse places</a>
+            </div>
+        </div>
+    </div>
+</section>

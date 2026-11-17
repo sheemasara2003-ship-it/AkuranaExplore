@@ -1,0 +1,164 @@
+@model HomeViewModel
+@{
+    ViewData["Title"] = "A smart local day-visit planner";
+}
+
+<section class="hero">
+    <div class="hero-overlay" aria-hidden="true"></div>
+    <div class="shell hero-inner">
+        <div class="hero-copy">
+            <p class="eyebrow eyebrow-light"><span class="dot"></span> Kandy District · Sri Lanka</p>
+            <h1>Small town.<br /><em>Big day out.</em></h1>
+            <p class="lead">
+                Akurana's temples, gardens, viewpoints and kitchens — gathered in one place,
+                then shaped into a day plan that actually fits.
+            </p>
+
+            <form class="search-bar" method="get" asp-controller="Places" asp-action="Index" role="search">
+                <label class="sr-only" for="heroSearch">Search places around Akurana</label>
+                <span class="search-icon" aria-hidden="true">⌕</span>
+                <input id="heroSearch" name="q" type="search" placeholder="Try “temple”, “garden” or “biriyani”" autocomplete="off" />
+                <button class="btn btn-primary" type="submit">Search</button>
+            </form>
+
+            <div class="hero-stats">
+                <div>
+                    <strong>@Model.PlaceCount</strong>
+                    <span>places within 25 km</span>
+                </div>
+                <div>
+                    <strong>@Model.CategoryCount</strong>
+                    <span>ways to spend the day</span>
+                </div>
+                <div>
+                    <strong>@Model.AverageRating.ToString("0.0")</strong>
+                    <span>average rating</span>
+                </div>
+            </div>
+        </div>
+
+        <aside class="hero-panel">
+            <p class="panel-kicker">Your day, in order</p>
+
+            @if (Model.PlanCount > 0)
+            {
+                <p class="hero-plan-count">@Model.PlanCount</p>
+                <h2>stop@(Model.PlanCount == 1 ? "" : "s") saved</h2>
+                <p>Your plan is waiting. Reorder the stops, check the travel time, and print it before you head out.</p>
+                <a class="btn btn-light btn-block" asp-controller="Planner" asp-action="Index">Open my day plan</a>
+            }
+            else
+            {
+                <div class="mini-route" aria-hidden="true">
+                    <span class="mini-index">1</span>
+                    <div><strong>Morning</strong><small>Temple &amp; lake walk</small></div>
+                    <span class="mini-index">2</span>
+                    <div><strong>Midday</strong><small>Gardens &amp; lunch</small></div>
+                    <span class="mini-index">3</span>
+                    <div><strong>Afternoon</strong><small>A view to finish</small></div>
+                </div>
+                <h2>Build a day that fits</h2>
+                <p>Choose a few places. We'll keep them in order and estimate the driving time between stops.</p>
+                <a class="btn btn-light btn-block" asp-controller="Planner" asp-action="Index">Start planning</a>
+            }
+
+            <div class="hero-panel-foot">
+                <span aria-hidden="true">✓</span> Free · no account needed
+            </div>
+        </aside>
+    </div>
+</section>
+
+<section class="section">
+    <div class="shell">
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Browse by mood</p>
+                <h2>Six ways into Akurana</h2>
+            </div>
+            <a class="text-link" asp-controller="Places" asp-action="Index">All places <span aria-hidden="true">→</span></a>
+        </div>
+
+        <div class="category-grid">
+            @foreach (var category in Model.Categories)
+            {
+                <a class="category-card" asp-controller="Places" asp-action="Index" asp-route-category="@category.Slug">
+                    <div class="category-media">
+                        <img src="@category.ImageUrl" alt="@category.Name" loading="lazy" onerror="this.src='/images/nature.jpg';" />
+                        <span class="category-icon" aria-hidden="true">@category.Icon</span>
+                    </div>
+                    <div class="category-body">
+                        <h3>@category.Name</h3>
+                        <p>@category.Blurb</p>
+                        <span class="category-count">@category.Places.Count place@(category.Places.Count == 1 ? "" : "s")</span>
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="section section-tint">
+    <div class="shell">
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Worth the trip</p>
+                <h2>Featured places</h2>
+            </div>
+            <p class="section-note">Hand-picked stops that show the range of the region — sacred, green and unmistakably Kandy.</p>
+        </div>
+
+        <div class="card-grid">
+            @foreach (var place in Model.Featured)
+            {
+                <partial name="_PlaceCard" model="place" />
+            }
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="shell plan-steps">
+        <div class="steps-copy">
+            <p class="eyebrow">The planner</p>
+            <h2>Three stops.<br />One easy day.</h2>
+            <p class="lead">No spreadsheets, no tabs, no guessing how long the drive takes. Add places and the plan builds itself around a realistic 8:30 AM start.</p>
+            <a class="btn btn-primary" asp-controller="Planner" asp-action="Index">Open the day planner</a>
+        </div>
+
+        <ol class="steps-list">
+            <li>
+                <span class="step-number">01</span>
+                <div>
+                    <h3>Pick what you like</h3>
+                    <p>Browse by category or search for something specific. Every place includes opening hours, fees and travel tips.</p>
+                </div>
+            </li>
+            <li>
+                <span class="step-number">02</span>
+                <div>
+                    <h3>Put the day in order</h3>
+                    <p>Move stops up or down, or let the planner suggest a shorter route. Duplicate stops are ignored automatically.</p>
+                </div>
+            </li>
+            <li>
+                <span class="step-number">03</span>
+                <div>
+                    <h3>Take it with you</h3>
+                    <p>See estimated arrival times, travel distance and total visit time. Copy or print the finished plan for the road.</p>
+                </div>
+            </li>
+        </ol>
+    </div>
+</section>
+
+<section class="notice-strip">
+    <div class="shell notice-inner">
+        <span class="notice-icon" aria-hidden="true">ⓘ</span>
+        <p>
+            <strong>Planning information, not live data.</strong>
+            Distances and travel times are estimates. Opening hours and entry fees can change,
+            so confirm with the site before you travel. This app does not provide bookings, payments or emergency information.
+        </p>
+    </div>
+</section>
